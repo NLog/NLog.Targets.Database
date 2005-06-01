@@ -42,10 +42,13 @@ using System.Collections;
 using NLog.Internal;
 using NLog.Config;
 
-namespace NLog.Appenders
+namespace NLog.Targets
 {
-    [Appender("Database")]
-    public sealed class DatabaseAppender: Appender
+    /// <summary>
+    /// Writes logging messages to the database using an ADO.NET provider.
+    /// </summary>
+    [Target("Database", IgnoresLayout=true)]
+    public sealed class DatabaseTarget: Target
     {
         private Assembly _system_data_assembly = typeof(IDbConnection).Assembly;
         private Type _connectionType = null;
@@ -57,15 +60,26 @@ namespace NLog.Appenders
         private Layout _dbPasswordLayout = null;
         private Layout _dbDatabaseLayout = null;
         private Layout _compiledCommandTextLayout = null;
-        private ParameterInfoCollection _parameters = new ParameterInfoCollection();
+        private DatabaseParameterInfoCollection _parameters = new DatabaseParameterInfoCollection();
         private IDbConnection _activeConnection = null;
         private string _connectionStringCache = null;
 
-        public DatabaseAppender()
+        /// <summary>
+        /// Creates a new instance of the <see cref="DatabaseTarget"/> object and sets
+        /// the default values of some properties;
+        /// </summary>
+        public DatabaseTarget()
         {
             DBProvider = "sqlserver";
         }
 
+        /// <summary>
+        /// The name of the database provider. It can be:
+        /// <c>sqlserver, mssql, microsoft, msde</c> (all for MSSQL database), <c>oledb, odbc</c> or other name in which case
+        /// it's treated as a fully qualified type name of the data provider *Connection class.
+        /// </summary>
+        [RequiredParameter]
+        [System.ComponentModel.DefaultValue("sqlserver")]
         public string DBProvider
         {
             get
@@ -98,7 +112,10 @@ namespace NLog.Appenders
             }
         }
 
-        [RequiredParameter]
+        /// <summary>
+        /// The connection string. When provided, it overrides the values
+        /// specified in DBHost, DBUserName, DBPassword, DBDatabase.
+        /// </summary>
         public string ConnectionString
         {
             get
@@ -111,6 +128,10 @@ namespace NLog.Appenders
             }
         }
 
+        /// <summary>
+        /// Keep the database connection open between the log events.
+        /// </summary>
+        [System.ComponentModel.DefaultValue(true)]
         public bool KeepConnection
         {
             get
@@ -123,6 +144,10 @@ namespace NLog.Appenders
             }
         }
 
+        /// <summary>
+        /// Use database transactions. Some data providers require this.
+        /// </summary>
+        [System.ComponentModel.DefaultValue(false)]
         public bool UseTransactions
         {
             get
@@ -136,6 +161,12 @@ namespace NLog.Appenders
             }
         }
 
+        /// <summary>
+        /// The database host name. If the ConnectionString is not provided
+        /// this value will be used to construct the "Server=" part of the
+        /// connection string.
+        /// </summary>
+        [AcceptsLayout]
         public string DBHost
         {
             get
@@ -148,6 +179,11 @@ namespace NLog.Appenders
             }
         }
 
+        /// <summary>
+        /// The database host name. If the ConnectionString is not provided
+        /// this value will be used to construct the "Server=" part of the
+        /// connection string.
+        /// </summary>
         public Layout DBHostLayout
         {
             get
@@ -160,6 +196,12 @@ namespace NLog.Appenders
             }
         }
 
+        /// <summary>
+        /// The database user name. If the ConnectionString is not provided
+        /// this value will be used to construct the "User ID=" part of the
+        /// connection string.
+        /// </summary>
+        [AcceptsLayout]
         public string DBUserName
         {
             get
@@ -172,6 +214,11 @@ namespace NLog.Appenders
             }
         }
 
+        /// <summary>
+        /// The database user name. If the ConnectionString is not provided
+        /// this value will be used to construct the "User ID=" part of the
+        /// connection string.
+        /// </summary>
         public Layout DBUserNameLayout
         {
             get
@@ -184,6 +231,12 @@ namespace NLog.Appenders
             }
         }
 
+        /// <summary>
+        /// The database password. If the ConnectionString is not provided
+        /// this value will be used to construct the "Password=" part of the
+        /// connection string.
+        /// </summary>
+        [AcceptsLayout]
         public string DBPassword
         {
             get
@@ -196,6 +249,11 @@ namespace NLog.Appenders
             }
         }
 
+        /// <summary>
+        /// The database password. If the ConnectionString is not provided
+        /// this value will be used to construct the "Password=" part of the
+        /// connection string.
+        /// </summary>
         public Layout DBPasswordLayout
         {
             get
@@ -208,6 +266,12 @@ namespace NLog.Appenders
             }
         }
 
+        /// <summary>
+        /// The database name. If the ConnectionString is not provided
+        /// this value will be used to construct the "Database=" part of the
+        /// connection string.
+        /// </summary>
+        [AcceptsLayout]
         public string DBDatabase
         {
             get
@@ -220,6 +284,11 @@ namespace NLog.Appenders
             }
         }
 
+        /// <summary>
+        /// The database name. If the ConnectionString is not provided
+        /// this value will be used to construct the "Database=" part of the
+        /// connection string.
+        /// </summary>
         public Layout DBDatabaseLayout
         {
             get
@@ -232,6 +301,19 @@ namespace NLog.Appenders
             }
         }
 
+        /// <summary>
+        /// The text of the SQL command to be run on each log level.
+        /// </summary>
+        /// <remarks>
+        /// Typically this is a SQL INSERT statement or a stored procedure call. 
+        /// It should use the database-specific parameters (marked as <c>@parameter</c>
+        /// for SQL server or <c>:parameter</c> for Oracle, other data providers
+        /// have their own notation) and not the layout renderers, 
+        /// because the latter is prone to SQL injection attacks.
+        /// The layout renderers should be specified as &lt;parameters />&gt; instead.
+        /// </remarks>
+        [AcceptsLayout]
+        [RequiredParameter]
         public string CommandText
         {
             get
@@ -244,6 +326,17 @@ namespace NLog.Appenders
             }
         }
 
+        /// <summary>
+        /// The text of the SQL command to be run on each log level.
+        /// </summary>
+        /// <remarks>
+        /// Typically this is a SQL INSERT statement or a stored procedure call. 
+        /// It should use the database-specific parameters (marked as <c>@parameter</c>
+        /// for SQL server or <c>:parameter</c> for Oracle, other data providers
+        /// have their own notation) and not the layout renderers, 
+        /// because the latter is prone to SQL injection attacks.
+        /// The layout renderers should be specified as &lt;parameters />&lt; instead.
+        /// </remarks>
         public Layout CommandTextLayout
         {
             get
@@ -256,8 +349,12 @@ namespace NLog.Appenders
             }
         }
 
-        [ArrayParameter(typeof(ParameterInfo), "parameter")]
-        public ParameterInfoCollection Parameters
+        /// <summary>
+        /// The collection of paramters. Each parameter contains a mapping
+        /// between NLog layout and a database named or positional parameter.
+        /// </summary>
+        [ArrayParameter(typeof(DatabaseParameterInfo), "parameter")]
+        public DatabaseParameterInfoCollection Parameters
         {
             get
             {
@@ -265,6 +362,12 @@ namespace NLog.Appenders
             }
         }
 
+        /// <summary>
+        /// Writes the specified logging event to the database. It creates
+        /// a new database command, prepares parameters for it by calculating
+        /// layouts and executes the command.
+        /// </summary>
+        /// <param name="ev">The logging event.</param>
         protected internal override void Append(LogEventInfo ev)
         {
             if (_keepConnection)
@@ -298,7 +401,7 @@ namespace NLog.Appenders
         {
             IDbCommand command = _activeConnection.CreateCommand();
             command.CommandText = CommandTextLayout.GetFormattedMessage(ev);
-            foreach (ParameterInfo par in Parameters)
+            foreach (DatabaseParameterInfo par in Parameters)
             {
                 IDbDataParameter p = command.CreateParameter();
                 p.Direction = ParameterDirection.Input;
@@ -374,290 +477,5 @@ namespace NLog.Appenders
             return _connectionStringCache;
         }
 
-        public class ParameterInfo
-        {
-            public ParameterInfo(){}
-
-            private Layout _compiledlayout;
-            private string _name;
-            private int _size = 0;
-            private byte _precision = 0;
-            private byte _scale = 0;
-
-            public string Name
-            {
-                get
-                {
-                    return _name;
-                }
-                set
-                {
-                    _name = value;
-                }
-            }
-
-            [RequiredParameter]
-            public string Layout
-            {
-                get
-                {
-                    return _compiledlayout.Text;
-                }
-                set
-                {
-                    _compiledlayout = new Layout(value);
-                }
-            }
-
-            public Layout CompiledLayout
-            {
-                get
-                {
-                    return _compiledlayout;
-                }
-                set
-                {
-                    _compiledlayout = value;
-                }
-            }
-
-            public int Size
-            {
-                get
-                {
-                    return _size;
-                }
-                set
-                {
-                    _size = value;
-                }
-            }
-
-            public byte Precision
-            {
-                get
-                {
-                    return _precision;
-                }
-                set
-                {
-                    _precision = value;
-                }
-            }
-
-            public byte Scale
-            {
-                get
-                {
-                    return _scale;
-                }
-                set
-                {
-                    _scale = value;
-                }
-            }
-        }
-
-#region Generated Typesafe Collection Wrapper
-
-        /// <summary>
-        /// A collection of elements of type ParameterInfo
-        /// </summary>
-        public class ParameterInfoCollection: System.Collections.CollectionBase
-        {
-            /// <summary>
-            /// Initializes a new empty instance of the ParameterInfoCollection class.
-            /// </summary>
-            public ParameterInfoCollection()
-            {
-                // empty
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the ParameterInfoCollection class, containing elements
-            /// copied from an array.
-            /// </summary>
-            /// <param name="items">
-            /// The array whose elements are to be added to the new ParameterInfoCollection.
-            /// </param>
-            public ParameterInfoCollection(ParameterInfo[]items)
-            {
-                this.AddRange(items);
-            }
-
-            /// <summary>
-            /// Initializes a new instance of the ParameterInfoCollection class, containing elements
-            /// copied from another instance of ParameterInfoCollection
-            /// </summary>
-            /// <param name="items">
-            /// The ParameterInfoCollection whose elements are to be added to the new ParameterInfoCollection.
-            /// </param>
-            public ParameterInfoCollection(ParameterInfoCollection items)
-            {
-                this.AddRange(items);
-            }
-
-            /// <summary>
-            /// Adds the elements of an array to the end of this ParameterInfoCollection.
-            /// </summary>
-            /// <param name="items">
-            /// The array whose elements are to be added to the end of this ParameterInfoCollection.
-            /// </param>
-            public virtual void AddRange(ParameterInfo[]items)
-            {
-                foreach (ParameterInfo item in items)
-                {
-                    this.List.Add(item);
-                }
-            }
-
-            /// <summary>
-            /// Adds the elements of another ParameterInfoCollection to the end of this ParameterInfoCollection.
-            /// </summary>
-            /// <param name="items">
-            /// The ParameterInfoCollection whose elements are to be added to the end of this ParameterInfoCollection.
-            /// </param>
-            public virtual void AddRange(ParameterInfoCollection items)
-            {
-                foreach (ParameterInfo item in items)
-                {
-                    this.List.Add(item);
-                }
-            }
-
-            /// <summary>
-            /// Adds an instance of type ParameterInfo to the end of this ParameterInfoCollection.
-            /// </summary>
-            /// <param name="value">
-            /// The ParameterInfo to be added to the end of this ParameterInfoCollection.
-            /// </param>
-            public virtual void Add(ParameterInfo value)
-            {
-                this.List.Add(value);
-            }
-
-            /// <summary>
-            /// Determines whether a specfic ParameterInfo value is in this ParameterInfoCollection.
-            /// </summary>
-            /// <param name="value">
-            /// The ParameterInfo value to locate in this ParameterInfoCollection.
-            /// </param>
-            /// <returns>
-            /// true if value is found in this ParameterInfoCollection;
-            /// false otherwise.
-            /// </returns>
-            public virtual bool Contains(ParameterInfo value)
-            {
-                return this.List.Contains(value);
-            }
-
-            /// <summary>
-            /// Return the zero-based index of the first occurrence of a specific value
-            /// in this ParameterInfoCollection
-            /// </summary>
-            /// <param name="value">
-            /// The ParameterInfo value to locate in the ParameterInfoCollection.
-            /// </param>
-            /// <returns>
-            /// The zero-based index of the first occurrence of the _ELEMENT value if found;
-            /// -1 otherwise.
-            /// </returns>
-            public virtual int IndexOf(ParameterInfo value)
-            {
-                return this.List.IndexOf(value);
-            }
-
-            /// <summary>
-            /// Inserts an element into the ParameterInfoCollection at the specified index
-            /// </summary>
-            /// <param name="index">
-            /// The index at which the ParameterInfo is to be inserted.
-            /// </param>
-            /// <param name="value">
-            /// The ParameterInfo to insert.
-            /// </param>
-            public virtual void Insert(int index, ParameterInfo value)
-            {
-                this.List.Insert(index, value);
-            }
-
-            /// <summary>
-            /// Gets or sets the ParameterInfo at the given index in this ParameterInfoCollection.
-            /// </summary>
-            public virtual ParameterInfo this[int index]
-            {
-                get
-                {
-                    return (ParameterInfo)this.List[index];
-                }
-                set
-                {
-                    this.List[index] = value;
-                }
-            }
-
-            /// <summary>
-            /// Removes the first occurrence of a specific ParameterInfo from this ParameterInfoCollection.
-            /// </summary>
-            /// <param name="value">
-            /// The ParameterInfo value to remove from this ParameterInfoCollection.
-            /// </param>
-            public virtual void Remove(ParameterInfo value)
-            {
-                this.List.Remove(value);
-            }
-
-            /// <summary>
-            /// Type-specific enumeration class, used by ParameterInfoCollection.GetEnumerator.
-            /// </summary>
-            public class Enumerator: System.Collections.IEnumerator
-            {
-                private System.Collections.IEnumerator wrapped;
-
-                public Enumerator(ParameterInfoCollection collection)
-                {
-                    this.wrapped = ((System.Collections.CollectionBase)collection).GetEnumerator();
-                }
-
-                public ParameterInfo Current
-                {
-                    get
-                    {
-                        return (ParameterInfo)(this.wrapped.Current);
-                    }
-                }
-
-                object System.Collections.IEnumerator.Current
-                {
-                    get
-                    {
-                        return (ParameterInfo)(this.wrapped.Current);
-                    }
-                }
-
-                public bool MoveNext()
-                {
-                    return this.wrapped.MoveNext();
-                }
-
-                public void Reset()
-                {
-                    this.wrapped.Reset();
-                }
-            }
-
-            /// <summary>
-            /// Returns an enumerator that can iterate through the elements of this ParameterInfoCollection.
-            /// </summary>
-            /// <returns>
-            /// An object that implements System.Collections.IEnumerator.
-            /// </returns>        
-            public new virtual ParameterInfoCollection.Enumerator GetEnumerator()
-            {
-                return new ParameterInfoCollection.Enumerator(this);
-            }
-        }
-
-#endregion 
     }
 }
