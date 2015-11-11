@@ -755,6 +755,48 @@ Dispose()
             Assert.Equal(typeof(System.Data.Odbc.OdbcConnection), dt.ConnectionType);
         }
 
+        [Theory]
+        [InlineData("usetransactions='false'",true)]
+        [InlineData("usetransactions='true'",true)]
+        [InlineData("",false)]
+        public void WarningForObsoleteUseTransactions(string property, bool printWarning)
+        {
+            LoggingConfiguration c = CreateConfigurationFromString(string.Format(@"
+            <nlog ThrowExceptions='true'>
+                <targets>
+                    <target type='database' {0} name='t1' commandtext='fake sql' connectionstring='somewhere' />
+                </targets>
+                <rules>
+                      <logger name='*' writeTo='t1'>
+                       
+                      </logger>
+                    </rules>
+            </nlog>", property));
+
+            StringWriter writer1 = new StringWriter()
+            {
+                NewLine = "\n"
+            };
+            InternalLogger.LogWriter = writer1;
+            var t = c.FindTargetByName<DatabaseTarget>("t1");
+            t.Initialize(null);
+            var internalLog = writer1.ToString();
+
+            if (printWarning)
+            {
+                Assert.Contains("obsolete", internalLog, StringComparison.InvariantCultureIgnoreCase);
+                Assert.Contains("usetransactions", internalLog, StringComparison.InvariantCultureIgnoreCase);
+            }
+            else
+            {
+                Assert.DoesNotContain("obsolete", internalLog, StringComparison.InvariantCultureIgnoreCase);
+                Assert.DoesNotContain("usetransactions", internalLog, StringComparison.InvariantCultureIgnoreCase);
+            }
+
+
+
+        }
+
         private static void AssertLog(string expectedLog)
         {
             Assert.Equal(expectedLog.Replace("\r", ""), MockDbConnection.Log.Replace("\r", ""));
