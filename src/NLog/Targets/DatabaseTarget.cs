@@ -1093,7 +1093,7 @@ namespace NLog.Targets
                     if (ex.MustBeRethrownImmediately())
                         throw;
 
-                    InternalLogger.Warn(ex, "  DatabaseTarget: Failed to convert raw value for '{0}' into {1}", propertyName, valueType?.Name);
+                    InternalLogger.Warn(ex, "  DatabaseTarget: Failed to convert raw value for '{0}' into {1}", propertyName, valueType);
                     if (ex.MustBeRethrown())
                         throw;
                 }
@@ -1101,7 +1101,7 @@ namespace NLog.Targets
 
             try
             {
-                InternalLogger.Trace("  DatabaseTarget: Attempt to convert layout value for '{0}' into {1}", propertyName, valueType?.Name);
+                InternalLogger.Trace("  DatabaseTarget: Attempt to convert layout value for '{0}' into {1}", propertyName, valueType);
                 string parameterValue = RenderLogEvent(valueLayout, logEvent);
                 if (string.IsNullOrEmpty(parameterValue))
                 {
@@ -1115,7 +1115,7 @@ namespace NLog.Targets
                 if (ex.MustBeRethrownImmediately())
                     throw;
 
-                InternalLogger.Warn(ex, "  DatabaseTarget: Failed to convert layout value for '{0}' into {1}", propertyName, valueType?.Name);
+                InternalLogger.Warn(ex, "  DatabaseTarget: Failed to convert layout value for '{0}' into {1}", propertyName, valueType);
 
                 if (ex.MustBeRethrown())
                     throw;
