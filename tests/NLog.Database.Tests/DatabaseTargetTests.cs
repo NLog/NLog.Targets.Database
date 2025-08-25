@@ -1924,65 +1924,65 @@ INSERT INTO NLogSqlLiteTestAppNames(Id, Name) VALUES (1, @appName);"">
         }
 #endif
 
-         [Theory]
-         [InlineData("localhost", "MyDatabase", "user", "password", "Server=localhost;User id=user;Password=password;Database=MyDatabase")]
-         [InlineData("localhost", null, "user", "password", "Server=localhost;User id=user;Password=password;")]
-         [InlineData("localhost", "MyDatabase", "user", "'password'", "Server=localhost;User id=user;Password='password';Database=MyDatabase")]
-         [InlineData("localhost", "MyDatabase", "user", "\"password\"", "Server=localhost;User id=user;Password=\"password\";Database=MyDatabase")]
-         [InlineData("localhost", "MyDatabase", "user", "pa;ssword", "Server=localhost;User id=user;Password='pa;ssword';Database=MyDatabase")]
-         [InlineData("localhost", "MyDatabase", "user", "pa'ssword", "Server=localhost;User id=user;Password=\"pa'ssword\";Database=MyDatabase")]
-         [InlineData("localhost", "MyDatabase", "user", "pa'\"ssword", "Server=localhost;User id=user;Password=\"pa'\"\"ssword\";Database=MyDatabase")]
-         [InlineData("localhost", "MyDatabase", "user", "pa\"ssword", "Server=localhost;User id=user;Password='pa\"ssword';Database=MyDatabase")]
-         [InlineData("localhost", "MyDatabase", "user", "", "Server=localhost;User id=user;Password=;Database=MyDatabase")]
-         [InlineData("localhost", "MyDatabase", null, "password", "Server=localhost;Trusted_Connection=SSPI;Database=MyDatabase")]
-         public void DatabaseConnectionStringTest(string host, string database, string username, string password, string expected)
-         {
-             // Arrange
-             var databaseTarget = new NonLoggingDatabaseTarget()
-             {
-                 CommandText = "DoSomething",
-                 Name = "myTarget",
-                 DBHost = host,
-                 DBDatabase = database,
-                 DBUserName = username,
-                 DBPassword = password
-             };
- 
-             var logEventInfo = LogEventInfo.CreateNullEvent();
- 
-             // Act
-             var result = databaseTarget.GetRenderedConnectionString(logEventInfo);
- 
-             // Assert
-             Assert.Equal(expected, result);
-         }
- 
-         [Theory]
-         [InlineData("password", "password")]
-         [InlineData("", "")]
-         [InlineData("password'", "\"password'\"")]
-         public void DatabaseConnectionStringViaVariableTest(string password, string expectedPassword)
-         {
-             // Arrange
-             var databaseTarget = new NonLoggingDatabaseTarget()
-             {
-                 CommandText = "DoSomething",
-                 Name = "myTarget",
-                 DBHost = "localhost",
-                 DBDatabase = "MyDatabase",
-                 DBUserName = "user",
-                 DBPassword = "${event-properties:myPassword}"
-             };
- 
-             var logEventInfo = LogEventInfo.Create(LogLevel.Debug, "logger1", "message1");
-             logEventInfo.Properties["myPassword"] = password;
- 
-             // Act
-             var result = databaseTarget.GetRenderedConnectionString(logEventInfo);
- 
-             // Assert
-             var expected = $"Server=localhost;User id=user;Password={expectedPassword};Database=MyDatabase";
-             Assert.Equal(expected, result);
+        [Theory]
+        [InlineData("localhost", "MyDatabase", "user", "password", "Server=localhost;User id=user;Password=password;Database=MyDatabase")]
+        [InlineData("localhost", null, "user", "password", "Server=localhost;User id=user;Password=password;")]
+        [InlineData("localhost", "MyDatabase", "user", "'password'", "Server=localhost;User id=user;Password='password';Database=MyDatabase")]
+        [InlineData("localhost", "MyDatabase", "user", "\"password\"", "Server=localhost;User id=user;Password=\"password\";Database=MyDatabase")]
+        [InlineData("localhost", "MyDatabase", "user", "pa;ssword", "Server=localhost;User id=user;Password='pa;ssword';Database=MyDatabase")]
+        [InlineData("localhost", "MyDatabase", "user", "pa'ssword", "Server=localhost;User id=user;Password=\"pa'ssword\";Database=MyDatabase")]
+        [InlineData("localhost", "MyDatabase", "user", "pa'\"ssword", "Server=localhost;User id=user;Password=\"pa'\"\"ssword\";Database=MyDatabase")]
+        [InlineData("localhost", "MyDatabase", "user", "pa\"ssword", "Server=localhost;User id=user;Password='pa\"ssword';Database=MyDatabase")]
+        [InlineData("localhost", "MyDatabase", "user", "", "Server=localhost;User id=user;Password=;Database=MyDatabase")]
+        [InlineData("localhost", "MyDatabase", null, "password", "Server=localhost;Trusted_Connection=SSPI;Database=MyDatabase")]
+        public void DatabaseConnectionStringTest(string host, string database, string username, string password, string expected)
+        {
+            // Arrange
+            var databaseTarget = new NonLoggingDatabaseTarget()
+            {
+                CommandText = "DoSomething",
+                Name = "myTarget",
+                DBHost = host,
+                DBDatabase = database,
+                DBUserName = username,
+                DBPassword = password
+            };
+
+            var logEventInfo = LogEventInfo.CreateNullEvent();
+
+            // Act
+            var result = databaseTarget.GetRenderedConnectionString(logEventInfo);
+
+            // Assert
+            Assert.Equal(expected, result);
+        }
+
+        [Theory]
+        [InlineData("password", "password")]
+        [InlineData("", "")]
+        [InlineData("password'", "\"password'\"")]
+        public void DatabaseConnectionStringViaVariableTest(string password, string expectedPassword)
+        {
+            // Arrange
+            var databaseTarget = new NonLoggingDatabaseTarget()
+            {
+                CommandText = "DoSomething",
+                Name = "myTarget",
+                DBHost = "localhost",
+                DBDatabase = "MyDatabase",
+                DBUserName = "user",
+                DBPassword = "${event-properties:myPassword}"
+            };
+
+            var logEventInfo = LogEventInfo.Create(LogLevel.Debug, "logger1", "message1");
+            logEventInfo.Properties["myPassword"] = password;
+
+            // Act
+            var result = databaseTarget.GetRenderedConnectionString(logEventInfo);
+
+            // Assert
+            var expected = $"Server=localhost;User id=user;Password={expectedPassword};Database=MyDatabase";
+            Assert.Equal(expected, result);
         }
 
 #if NET8_0_OR_GREATER
@@ -2059,6 +2059,7 @@ INSERT INTO NLogSqlLiteTestAppNames(Id, Name) VALUES (1, @appName);"">
             // Assert
             Assert.Equal(expectedException, actualException);
         }
+
 
         [Fact]
         public void DbTypeSetterNullTest()
