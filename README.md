@@ -1,5 +1,8 @@
 # NLog Database Target
 
+[![Version](https://badge.fury.io/nu/NLog.Database.svg)](https://www.nuget.org/packages/NLog.Database)
+[![AppVeyor](https://img.shields.io/appveyor/ci/nlog/NLog-Targets-Database/master.svg)](https://ci.appveyor.com/project/nlog/NLog-Targets-Database/branch/master)
+
 NLog Database Target can write to any database that has ADO.NET Database Provider. Ex. MS-SQL, MySQL, SqLite, Oracle, etc.
 
 Make sure to also install the nuget-package for the wanted Database Provider, and configure the [DbProvider](https://github.com/NLog/NLog/wiki/Database-target#dbprovider-examples) for the Database Target.
