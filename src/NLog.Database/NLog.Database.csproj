@@ -28,7 +28,7 @@ Docs:
 https://github.com/nlog/NLog/wiki/Database-target
     </PackageReleaseNotes>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageTags>NLog;Database;SQL;logging;log</PackageTags>
+    <PackageTags>NLog;Database;SQL;logging;log;SqlClient;MySQL;SqLite;PostgreSQL;Oracle</PackageTags>
     <PackageIcon>N.png</PackageIcon>
     <PackageProjectUrl>https://github.com/NLog/NLog.Targets.Database</PackageProjectUrl>
     <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
