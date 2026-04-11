@@ -23,6 +23,7 @@
     <PackageReleaseNotes>
 Changelog:
 - Moved to own Git-repository
+- Updated to NLog v6.1.2 with improved support for DateTimeOffset
       
 Docs:
 https://github.com/nlog/NLog/wiki/Database-target
@@ -54,11 +55,6 @@ https://github.com/nlog/NLog/wiki/Database-target
     <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
   </PropertyGroup>
 
-  <PropertyGroup Condition=" '$(TargetFramework)' == 'net45' ">
-    <Title>NLog.Database for .NET Framework 4.5</Title>
-    <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
-  </PropertyGroup>
-
   <PropertyGroup Condition=" '$(TargetFramework)' == 'net35' ">
     <Title>NLog.Database for .NET Framework 3.5</Title>
     <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
@@ -73,7 +69,7 @@ https://github.com/nlog/NLog/wiki/Database-target
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NLog" Version="6.0.3" />
+    <PackageReference Include="NLog" Version="6.1.2" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
   </ItemGroup>
 

@@ -594,7 +594,7 @@ Dispose()
         [InlineData("${counter}", DbType.Int32, 1)]
         [InlineData("${counter}", DbType.Int64, (long)1)]
         [InlineData("${counter:norawvalue=true}", DbType.Int16, (short)1)] //fallback
-        [InlineData("${counter}", DbType.VarNumeric, 1, false, true)]
+        [InlineData("${counter}", DbType.VarNumeric, 1, false, typeof(decimal))]
         [InlineData("${counter}", DbType.AnsiString, "1")]
         [InlineData("${level}", DbType.AnsiString, "Debug")]
         [InlineData("${level}", DbType.Int32, 1)]
@@ -617,10 +617,13 @@ Dispose()
         [InlineData("${event-properties:NullRawValue}", DbType.AnsiString, null, true)]
         [InlineData("${event-properties:NullRawValue}", DbType.Int32, null, true)]
         [InlineData("${event-properties:NullRawValue}", DbType.Guid, null, true)]
+        [InlineData("${event-properties:dateprop}", DbType.DateTime, "1970-01-01T12:34:56.0000000Z", false, typeof(DateTime))]
+        [InlineData("${event-properties:dateprop}", DbType.DateTimeOffset, "1970-01-01T12:34:56.0000000Z", false, typeof(DateTimeOffset))]
+        [InlineData("${event-properties:dateprop:format=o}", DbType.AnsiString, "1970-01-01T12:34:56.0000000Z")]
         [InlineData("", DbType.AnsiString, null, true)]
         [InlineData("", DbType.Int32, null, true)]
         [InlineData("", DbType.Guid, null, true)]
-        public void GetParameterValueTest(string layout, DbType dbtype, object expected, bool allowDbNull = false, bool convertToDecimal = false)
+        public void GetParameterValueTest(string layout, DbType dbtype, object expected, bool allowDbNull = false, Type convertExpectedToType = null)
         {
             // Arrange
             var logEventInfo = new LogEventInfo(LogLevel.Debug, "logger1", "message 2");
@@ -628,7 +631,7 @@ Dispose()
             logEventInfo.Properties["boolprop"] = true;
             logEventInfo.Properties["emptyprop"] = "";
             logEventInfo.Properties["almostAsIntProp"] = " 124 ";
-            logEventInfo.Properties["dateprop"] = new DateTime(2018, 12, 30, 13, 34, 56);
+            logEventInfo.Properties["dateprop"] = new DateTime(1970, 01, 01, 12, 34, 56, DateTimeKind.Utc);
 
             var parameterName = "@param1";
             var databaseParameterInfo = new DatabaseParameterInfo
@@ -644,10 +647,15 @@ Dispose()
             var result = new DatabaseTarget().GetDatabaseParameterValue(logEventInfo, databaseParameterInfo);
 
             //Assert
-            if (convertToDecimal)
+            if (convertExpectedToType != null)
             {
-                //fix that we can't pass decimals into attributes (InlineData)
-                expected = (decimal)(int)expected;
+                //fix that we can't pass decimal / DateTime into attributes (InlineData)
+                if (convertExpectedToType == typeof(DateTimeOffset))
+                    expected = DateTimeOffset.Parse(expected.ToString(), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+                else if (convertExpectedToType == typeof(DateTime))
+                    expected = DateTime.Parse(expected.ToString(), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+                else
+                    expected = Convert.ChangeType(expected, convertExpectedToType, CultureInfo.InvariantCulture);
             }
 
             Assert.Equal(expected ?? DBNull.Value, result);
