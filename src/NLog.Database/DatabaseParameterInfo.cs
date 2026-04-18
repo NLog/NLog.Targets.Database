@@ -325,13 +325,13 @@ namespace NLog.Targets
                     else
                     {
                         dbTypeName = dbTypeNames[dbTypeNames.Length - 1];
-                        if (!string.IsNullOrEmpty(dbTypeName) && ConversionHelpers.TryParseEnum(dbTypeName, out DbType dbType))
+                        if (!string.IsNullOrEmpty(dbTypeName) && TryParseEnumDbType(dbTypeName, out DbType dbType))
                         {
                             _dbTypeSetter = (p) => p.DbType = dbType;
                         }
                         else
                         {
-                            InternalLogger.Error("DatabaseTarget: Failed to resolve enum to assign DbType={0}", dbTypeName);
+                            InternalLogger.Error("DatabaseTarget: Failed to resolve enum to assign DbType={0}", _dbTypeName);
                         }
                     }
                 }
@@ -339,6 +339,24 @@ namespace NLog.Targets
                 {
                     _dbTypeSetter = (p) => { };
                 }
+            }
+
+            private static bool TryParseEnumDbType(string inputValue, out DbType resultValue)
+            {
+#if !NET35
+                return Enum.TryParse<DbType>(inputValue, true, out resultValue);
+#else
+                try
+                {
+                    resultValue = (DbType)Enum.Parse(typeof(DbType), inputValue, true);
+                    return true;
+                }
+                catch (ArgumentException)
+                {
+                    resultValue = default(DbType);
+                    return false;
+                }
+#endif
             }
 
             private static Action<IDbDataParameter>? BuildCustomDbSetter(Type dbParameterType, string dbTypePropertyName, string dbTypeEnumValue)
