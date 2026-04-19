@@ -26,7 +26,7 @@ Changelog:
 - Updated to NLog v6.1.2 with improved support for DateTimeOffset
       
 Docs:
-https://github.com/nlog/NLog/wiki/Database-target
+https://github.com/NLog/NLog/wiki/Database-target
     </PackageReleaseNotes>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageTags>NLog;Database;SQL;logging;log;SqlClient;MySQL;SqLite;PostgreSQL;Oracle</PackageTags>
