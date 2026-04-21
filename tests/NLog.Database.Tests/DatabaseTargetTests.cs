@@ -599,6 +599,9 @@ Dispose()
         [InlineData("${level}", DbType.AnsiString, "Debug")]
         [InlineData("${level}", DbType.Int32, 1)]
         [InlineData("${level}", DbType.UInt16, (ushort)1)]
+        [InlineData("${date}", DbType.DateTime, "1970-01-01T12:34:56.0000000Z", false, typeof(DateTime))]
+        [InlineData("${date}", DbType.DateTimeOffset, "1970-01-01T12:34:56.0000000Z", false, typeof(DateTimeOffset))]
+        [InlineData("${date:format=o}", DbType.AnsiString, "1970-01-01T12:34:56.0000000Z")]
         [InlineData("${event-properties:boolprop}", DbType.Boolean, true)]
         [InlineData("${event-properties:intprop}", DbType.Int32, 123)]
         [InlineData("${event-properties:intprop}", DbType.AnsiString, "123")]
@@ -627,6 +630,7 @@ Dispose()
         {
             // Arrange
             var logEventInfo = new LogEventInfo(LogLevel.Debug, "logger1", "message 2");
+            logEventInfo.TimeStamp = new DateTime(1970, 01, 01, 12, 34, 56, DateTimeKind.Utc);
             logEventInfo.Properties["intprop"] = 123;
             logEventInfo.Properties["boolprop"] = true;
             logEventInfo.Properties["emptyprop"] = "";
