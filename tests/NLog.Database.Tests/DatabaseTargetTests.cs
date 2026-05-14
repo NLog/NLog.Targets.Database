@@ -2115,6 +2115,110 @@ INSERT INTO NLogSqlLiteTestAppNames(Id, Name) VALUES (1, @appName);"">
             Assert.Equal(csExpected, cs);
         }
 
+        [Fact]
+        public void DbConnectionFactoryNullTest()
+        {
+            Assert.Throws<ArgumentNullException>(() => new DatabaseTarget((Func<IDbConnection>)null));
+        }
+
+        [Fact]
+        public void DbConnectionFactoryReturnsNullTest()
+        {
+            // Clear log
+            MockDbConnection.ClearLog();
+            var exceptions = new List<Exception>();
+
+            // Arrange
+            var dt = new DatabaseTarget(() => null)
+            {
+                CommandText = "not important",
+                ConnectionString = "FooBar",
+            };
+            var logFactory = new LogFactory().Setup().LoadConfiguration(cfg => cfg.Configuration.AddRuleForAllLevels(dt)).LogFactory;
+
+            try
+            {
+                LogManager.ThrowExceptions = false;
+                dt.WriteAsyncLogEvent(LogEventInfo.CreateNullEvent().WithContinuation(exceptions.Add));
+            }
+            finally
+            {
+                LogManager.ThrowExceptions = true;
+                logFactory.Shutdown();
+            }
+
+            // Assert
+            Assert.Single(exceptions);
+            Assert.NotNull(exceptions[0]);
+            Assert.Equal("Creation of DbConnection failed", exceptions[0].Message);
+        }
+
+        [Fact]
+        public void DbConnectionFactoryThrowsTest()
+        {
+            // Clear log
+            MockDbConnection.ClearLog();
+            var exceptions = new List<Exception>();
+
+            // Arrange
+            var dt = new DatabaseTarget(() => throw new InvalidOperationException("Factory failure"))
+            {
+                CommandText = "not important",
+                ConnectionString = "FooBar",
+            };
+            var logFactory = new LogFactory().Setup().LoadConfiguration(cfg => cfg.Configuration.AddRuleForAllLevels(dt)).LogFactory;
+
+            try
+            {
+                LogManager.ThrowExceptions = false;
+                dt.WriteAsyncLogEvent(LogEventInfo.CreateNullEvent().WithContinuation(exceptions.Add));
+            }
+            finally
+            {
+                LogManager.ThrowExceptions = true;
+                logFactory.Shutdown();
+            }
+
+            // Assert
+            Assert.Single(exceptions);
+            Assert.NotNull(exceptions[0]);
+            Assert.Equal("Factory failure", exceptions[0].Message);
+        }
+
+        [Fact]
+        public void DbConnectionFactoryWithParametersWriteTest()
+        {
+            // Clear log
+            MockDbConnection.ClearLog();
+
+            // Arrange
+            var dt = new DatabaseTarget(() => new MockDbConnection())
+            {
+                CommandText = "INSERT INTO FooBar VALUES(@msg)",
+                ConnectionString = "FooBar",
+                Parameters =
+                {
+                    new DatabaseParameterInfo("@msg", "${message}", p => p.DbType = DbType.String),
+                },
+            };
+            new LogFactory().Setup().LoadConfiguration(cfg => cfg.Configuration.AddRuleForAllLevels(dt));
+
+            var exceptions = new List<Exception>();
+            dt.WriteAsyncLogEvent(new LogEventInfo(LogLevel.Info, "MyLogger", "msg1").WithContinuation(exceptions.Add));
+            foreach (var ex in exceptions)
+            {
+                Assert.Null(ex);
+            }
+
+            // Assert
+            var log = MockDbConnection.Log;
+            Assert.Contains("Open('FooBar').", log);
+            Assert.Contains("Parameter #0 Name=@msg", log);
+            Assert.Contains("Parameter #0 DbType=String", log);
+            Assert.Contains("Parameter #0 Value=\"msg1\"", log);
+            Assert.Contains("ExecuteNonQuery: INSERT INTO FooBar VALUES(@msg)", log);
+        }
+
         private static void AssertLog(string expectedLog)
         {
             Assert.Equal(expectedLog.Replace("\r", ""), MockDbConnection.Log.Replace("\r", ""));
