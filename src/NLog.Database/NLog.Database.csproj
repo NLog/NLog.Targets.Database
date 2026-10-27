@@ -68,6 +68,13 @@ https://github.com/NLog/NLog/wiki/Database-target
     <Title>NLog.Database for NetStandard 2.1</Title>
   </PropertyGroup>
 
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net8.0' ">
+    <!-- CS8600: Maybe-null value to non-nullable type. https://learn.microsoft.com/dotnet/csharp/language-reference/compiler-messages/nullable-warnings#possible-null-assigned-to-a-nonnullable-reference -->
+    <!-- CS8603: Possible null return. https://learn.microsoft.com/dotnet/csharp/language-reference/compiler-messages/nullable-warnings#possible-null-assigned-to-a-nonnullable-reference -->
+    <!-- CS8604: Possible null argument. https://learn.microsoft.com/dotnet/csharp/language-reference/compiler-messages/nullable-warnings#possible-null-assigned-to-a-nonnullable-reference -->
+    <WarningsNotAsErrors>CS8600;CS8603;CS8604</WarningsNotAsErrors>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="NLog" Version="6.1.2" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
