@@ -17,18 +17,8 @@ env:
 
 jobs:
   build:
-    name: ${{ matrix.name }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: windows-latest
-            name: Build & test (Windows)
-            framework_args:
-          - os: ubuntu-latest
-            name: Build & test (Ubuntu)
-            framework_args: -p:TargetFrameworks=net8.0
-    runs-on: ${{ matrix.os }}
+    name: Build & test (Windows)
+    runs-on: windows-latest
     permissions:
       contents: read
 
@@ -36,10 +26,41 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Restore & Build
-        run: dotnet build ${{ env.SOLUTION }} --configuration Release ${{ matrix.framework_args }}
+        run: dotnet build ${{ env.SOLUTION }} --configuration Release
 
       - name: Test
-        run: dotnet test ${{ env.SOLUTION }} --configuration Release --no-restore --no-build ${{ matrix.framework_args }} --logger "console;verbosity=normal"
+        run: dotnet test ${{ env.SOLUTION }} --configuration Release --no-restore --no-build --logger "console;verbosity=normal"
+
+  build-linux:
+    name: Build & test (Ubuntu + SQL Server 2019)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      SQLSERVER_TEST_CONNECTION_STRING: "Server=localhost,1433;Database=NLogTest;User ID=sa;Password=CiSqlServer!2019;Encrypt=False;TrustServerCertificate=True"
+    services:
+      sqlserver:
+        image: mcr.microsoft.com/mssql/server:2019-latest
+        env:
+          ACCEPT_EULA: Y
+          MSSQL_SA_PASSWORD: CiSqlServer!2019
+          MSSQL_PID: Developer
+        ports:
+          - 1433:1433
+        options: >-
+          --health-cmd "grep -q 'SQL Server is now ready for client connections' /var/opt/mssql/log/errorlog"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 20
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Restore & Build
+        run: dotnet build ${{ env.SOLUTION }} --configuration Release -p:TargetFrameworks=net8.0
+
+      - name: Test
+        run: dotnet test ${{ env.SOLUTION }} --configuration Release --no-restore --no-build -p:TargetFrameworks=net8.0 --logger "console;verbosity=normal"
 
   pack:
     name: Create NuGet package
@@ -86,7 +107,7 @@ jobs:
 
   publish:
     name: Publish NuGet package
-    needs: [build, pack]
+    needs: [build, build-linux, pack]
     if: >-
       (github.event_name == 'push' && github.ref == 'refs/heads/master') ||
       (github.event_name == 'workflow_dispatch' && inputs.force_nuget_publish)
