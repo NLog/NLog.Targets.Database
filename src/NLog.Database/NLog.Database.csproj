@@ -7,10 +7,8 @@
     
     <VersionPrefix>6.0.3</VersionPrefix>
     <AssemblyVersion>6.0.0.0</AssemblyVersion> <!-- Strong AssemblyVersion must be fixed on 6.0.0.0 -->
-    <AppVeyorBuildNumber>$(APPVEYOR_BUILD_NUMBER)</AppVeyorBuildNumber>
-    <AppVeyorBuildNumber Condition="'$(AppVeyorBuildNumber)' == ''">0</AppVeyorBuildNumber>
-    <FileVersion>$(VersionPrefix).$(AppVeyorBuildNumber)</FileVersion>
-
+		<FileVersion>$(VersionPrefix).0</FileVersion>
+    
     <Title>NLog Database Target</Title>
     <Company>NLog</Company>
     <Description>NLog.Database includes DatabaseTarget for writing to any database with DbProvider support</Description>
