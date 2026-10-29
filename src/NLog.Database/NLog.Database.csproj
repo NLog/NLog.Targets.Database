@@ -7,13 +7,12 @@
     
     <VersionPrefix>6.0.3</VersionPrefix>
     <AssemblyVersion>6.0.0.0</AssemblyVersion> <!-- Strong AssemblyVersion must be fixed on 6.0.0.0 -->
-		<FileVersion>$(VersionPrefix).0</FileVersion>
+	<FileVersion>$(VersionPrefix).0</FileVersion>
     
     <Title>NLog Database Target</Title>
     <Company>NLog</Company>
     <Description>NLog.Database includes DatabaseTarget for writing to any database with DbProvider support</Description>
-    <Product>NLog Database v$(ProductVersion)</Product>
-    <InformationalVersion>$(ProductVersion)</InformationalVersion>
+    <Product>NLog Database v$(VersionPrefix)</Product>
     <Authors>Jarek Kowalski,Kim Christensen,Julian Verdurmen</Authors>
     <CurrentYear>$([System.DateTime]::Now.ToString(yyyy))</CurrentYear>
     <Copyright>Copyright (c) 2004-$(CurrentYear) NLog Project - https://nlog-project.org/ </Copyright>
