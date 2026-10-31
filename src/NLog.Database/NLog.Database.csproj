@@ -4,18 +4,15 @@
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">17.0</VisualStudioVersion>
     <TargetFrameworks Condition=" '$(TargetFrameworks)' == '' AND '$(VisualStudioVersion)' &lt; '17.0' ">net35;net46;netstandard2.0</TargetFrameworks>
     <TargetFrameworks Condition=" '$(TargetFrameworks)' == '' ">net35;net46;netstandard2.0;netstandard2.1</TargetFrameworks>
-    
+
     <VersionPrefix>6.0.3</VersionPrefix>
-    <AssemblyVersion>6.0.0.0</AssemblyVersion> <!-- Strong AssemblyVersion must be fixed on 6.0.0.0 -->
-    <AppVeyorBuildNumber>$(APPVEYOR_BUILD_NUMBER)</AppVeyorBuildNumber>
-    <AppVeyorBuildNumber Condition="'$(AppVeyorBuildNumber)' == ''">0</AppVeyorBuildNumber>
-    <FileVersion>$(VersionPrefix).$(AppVeyorBuildNumber)</FileVersion>
+    <AssemblyVersion>6.0.0.0</AssemblyVersion>    <!-- Strong AssemblyVersion must be fixed on 6.0.0.0 -->
+    <FileVersion>$(VersionPrefix).0</FileVersion>
 
     <Title>NLog Database Target</Title>
     <Company>NLog</Company>
     <Description>NLog.Database includes DatabaseTarget for writing to any database with DbProvider support</Description>
-    <Product>NLog Database v$(ProductVersion)</Product>
-    <InformationalVersion>$(ProductVersion)</InformationalVersion>
+    <Product>NLog Database v$(VersionPrefix)</Product>
     <Authors>Jarek Kowalski,Kim Christensen,Julian Verdurmen</Authors>
     <CurrentYear>$([System.DateTime]::Now.ToString(yyyy))</CurrentYear>
     <Copyright>Copyright (c) 2004-$(CurrentYear) NLog Project - https://nlog-project.org/ </Copyright>
@@ -24,6 +21,7 @@
 Changelog:
 - Moved to own Git-repository
 - Updated to NLog v6.1.2 with improved support for DateTimeOffset
+- Removed .NET 4.5 build (note: .NET 4.5 is end of life)
       
 Docs:
 https://github.com/NLog/NLog/wiki/Database-target
@@ -66,6 +64,13 @@ https://github.com/NLog/NLog/wiki/Database-target
 
   <PropertyGroup Condition=" '$(TargetFramework)' == 'netstandard2.1' ">
     <Title>NLog.Database for NetStandard 2.1</Title>
+  </PropertyGroup>
+
+  <PropertyGroup Condition=" '$(TargetFramework)' == 'net8.0' ">
+    <!-- CS8600: Maybe-null value to non-nullable type. https://learn.microsoft.com/dotnet/csharp/language-reference/compiler-messages/nullable-warnings#possible-null-assigned-to-a-nonnullable-reference -->
+    <!-- CS8603: Possible null return. https://learn.microsoft.com/dotnet/csharp/language-reference/compiler-messages/nullable-warnings#possible-null-assigned-to-a-nonnullable-reference -->
+    <!-- CS8604: Possible null argument. https://learn.microsoft.com/dotnet/csharp/language-reference/compiler-messages/nullable-warnings#possible-null-assigned-to-a-nonnullable-reference -->
+    <WarningsNotAsErrors>CS8600;CS8603;CS8604</WarningsNotAsErrors>
   </PropertyGroup>
 
   <ItemGroup>

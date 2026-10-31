@@ -1,0 +1,143 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      force_nuget_publish:
+        description: Force NuGet publish # for non-master. The package version gets a suffix. See Create NuGet Package step
+        type: boolean
+        default: false
+
+env:
+  SOLUTION: NLog.Targets.Database.sln
+
+jobs:
+  build:
+    name: Build & test (Windows)
+    runs-on: windows-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Restore & Build
+        run: dotnet build ${{ env.SOLUTION }} --configuration Release
+
+      - name: Test
+        run: dotnet test ${{ env.SOLUTION }} --configuration Release --no-restore --no-build --logger GitHubActions
+
+  build-linux:
+    name: Build & test (Ubuntu + SQL Server 2019)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Restore & Build
+        run: dotnet build ${{ env.SOLUTION }} --configuration Release -p:TargetFrameworks=net8.0
+
+      - name: Start SQL Server
+        shell: bash
+        run: |
+          password="Aa9$(openssl rand -hex 32)"
+          echo "::add-mask::$password"
+          printf 'SQLSERVER_TEST_CONNECTION_STRING=Server=localhost,1433;Database=NLogTest;User ID=sa;Password=%s;Encrypt=False;TrustServerCertificate=True\n' "$password" >> "$GITHUB_ENV"
+
+          docker run --detach --name sqlserver \
+            --env ACCEPT_EULA=Y \
+            --env "MSSQL_SA_PASSWORD=$password" \
+            --env MSSQL_PID=Developer \
+            --publish 1433:1433 \
+            mcr.microsoft.com/mssql/server:2019-latest
+
+          for attempt in {1..60}; do
+            if docker logs sqlserver 2>&1 | grep -q 'SQL Server is now ready for client connections'; then
+              exit 0
+            fi
+            sleep 2
+          done
+
+          docker logs sqlserver
+          exit 1
+
+      - name: Test
+        run: dotnet test ${{ env.SOLUTION }} --configuration Release --no-restore --no-build -p:TargetFrameworks=net8.0 --logger GitHubActions
+
+  pack:
+    name: Create NuGet package
+    runs-on: windows-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Restore
+        run: dotnet restore ${{ env.SOLUTION }}
+
+      - name: Determine version suffix
+        id: version
+        shell: pwsh
+        env:
+          REF: ${{ github.ref }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RUN_NUMBER: ${{ github.run_number }}
+        run: |
+          if ($env:REF -eq "refs/heads/master") {
+            echo "suffix=" >> $env:GITHUB_OUTPUT
+          } elseif ($env:PR_NUMBER) {
+            echo "suffix=pr.$($env:PR_NUMBER).ci.$($env:RUN_NUMBER)" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "suffix=ci.$($env:RUN_NUMBER)" >> $env:GITHUB_OUTPUT
+          }
+
+      - name: Create NuGet package
+        shell: pwsh
+        env:
+          VERSION_SUFFIX: ${{ steps.version.outputs.suffix }}
+        run: dotnet pack ${{ env.SOLUTION }} --no-restore --configuration Release --output artifacts -p:IncludeSymbols=true -p:SymbolPackageFormat=snupkg -p:EmbedUntrackedSources=true -p:ContinuousIntegrationBuild=true --version-suffix "$env:VERSION_SUFFIX"
+
+      - name: Upload NuGet package
+        uses: actions/upload-artifact@v7
+        with:
+          name: NuGetPackages
+          path: |
+            artifacts/*.nupkg
+            artifacts/*.snupkg
+          if-no-files-found: error
+
+  publish:
+    name: Publish NuGet package
+    needs: [build, build-linux, pack]
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/master') ||
+      (github.event_name == 'workflow_dispatch' && inputs.force_nuget_publish)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Download NuGet package
+        uses: actions/download-artifact@v7
+        with:
+          name: NuGetPackages
+          path: artifacts
+
+      - name: NuGet login
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Push to NuGet.org
+        shell: pwsh
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+        run: dotnet nuget push "artifacts/*.nupkg" --api-key $env:NUGET_API_KEY --source https://api.nuget.org/v3/index.json --skip-duplicate

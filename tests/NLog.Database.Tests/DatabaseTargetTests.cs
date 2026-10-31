@@ -1714,19 +1714,11 @@ INSERT INTO NLogSqlLiteTestAppNames(Id, Name) VALUES (1, @appName);"">
         [Fact]
         public void SqlServer_NoTargetInstallException()
         {
-            if (IsLinux())
-            {
-                Console.WriteLine("skipping test SqlServer_NoTargetInstallException because we are running in Travis");
-                return;
-            }
-
-            bool isAppVeyor = IsAppVeyor();
-
             try
             {
-                var connectionString = SqlServerTest.GetConnectionString(isAppVeyor);
+                var connectionString = SqlServerTest.GetConnectionString();
 
-                CreateDatabaseWithRetry(isAppVeyor);
+                CreateDatabaseWithRetry();
 
                 DatabaseTarget testTarget = new DatabaseTarget("TestDbTarget");
                 testTarget.ConnectionString = connectionString;
@@ -1748,7 +1740,7 @@ INSERT INTO NLogSqlLiteTestAppNames(Id, Name) VALUES (1, @appName);"">
                     testTarget.Install(context);
                 }
 
-                var tableCatalog = SqlServerTest.IssueScalarQuery(isAppVeyor, @"SELECT TABLE_NAME FROM NLogTest.INFORMATION_SCHEMA.TABLES
+                var tableCatalog = SqlServerTest.IssueScalarQuery(@"SELECT TABLE_NAME FROM NLogTest.INFORMATION_SCHEMA.TABLES
                     WHERE TABLE_TYPE = 'BASE TABLE'
                     AND  TABLE_NAME = 'NLogTestTable'
                 ");
@@ -1758,26 +1750,18 @@ INSERT INTO NLogSqlLiteTestAppNames(Id, Name) VALUES (1, @appName);"">
             }
             finally
             {
-                SqlServerTest.TryDropDatabase(isAppVeyor);
+                SqlServerTest.TryDropDatabase();
             }
         }
 
         [Fact]
         public void SqlServer_InstallAndLogMessage()
         {
-            if (IsLinux())
-            {
-                Console.WriteLine("skipping test SqlServer_InstallAndLogMessage because we are running in Travis");
-                return;
-            }
-
-            bool isAppVeyor = IsAppVeyor();
-
             try
             {
-                var connectionString = SqlServerTest.GetConnectionString(isAppVeyor);
+                var connectionString = SqlServerTest.GetConnectionString();
 
-                CreateDatabaseWithRetry(isAppVeyor);
+                CreateDatabaseWithRetry();
 
                 var logFactory = new LogFactory().Setup().SetupExtensions(ext => ext.RegisterAssembly(typeof(DatabaseTarget).Assembly)).LoadConfigurationFromXml(@"
             <nlog xmlns='http://www.nlog-project.org/schemas/NLog.xsd'
@@ -1805,7 +1789,7 @@ INSERT INTO NLogSqlLiteTestAppNames(Id, Name) VALUES (1, @appName);"">
                 InstallationContext context = new InstallationContext();
                 logFactory.Configuration.Install(context);
 
-                var tableCatalog = SqlServerTest.IssueScalarQuery(isAppVeyor, @"SELECT TABLE_CATALOG FROM INFORMATION_SCHEMA.TABLES
+                var tableCatalog = SqlServerTest.IssueScalarQuery(@"SELECT TABLE_CATALOG FROM INFORMATION_SCHEMA.TABLES
                  WHERE TABLE_SCHEMA = 'Dbo'
                  AND  TABLE_NAME = 'NLogSqlServerTest'");
 
@@ -1820,25 +1804,25 @@ INSERT INTO NLogSqlLiteTestAppNames(Id, Name) VALUES (1, @appName);"">
                 logEvent.Properties["uid"] = uid;
                 logger.Log(logEvent);
 
-                var count = SqlServerTest.IssueScalarQuery(isAppVeyor, "SELECT count(1) FROM dbo.NLogSqlServerTest");
+                var count = SqlServerTest.IssueScalarQuery("SELECT count(1) FROM dbo.NLogSqlServerTest");
 
                 Assert.Equal(1, count);
 
-                var result = SqlServerTest.IssueScalarQuery(isAppVeyor, "SELECT Uid FROM dbo.NLogSqlServerTest");
+                var result = SqlServerTest.IssueScalarQuery("SELECT Uid FROM dbo.NLogSqlServerTest");
 
                 Assert.Equal(uid, result);
 
-                var result2 = SqlServerTest.IssueScalarQuery(isAppVeyor, "SELECT LogDate FROM dbo.NLogSqlServerTest");
+                var result2 = SqlServerTest.IssueScalarQuery("SELECT LogDate FROM dbo.NLogSqlServerTest");
 
                 Assert.Equal(DateTime.Today, result2);
             }
             finally
             {
-                SqlServerTest.TryDropDatabase(isAppVeyor);
+                SqlServerTest.TryDropDatabase();
             }
         }
 
-        private static void CreateDatabaseWithRetry(bool isAppVeyor)
+        private static void CreateDatabaseWithRetry()
         {
             for (int i = 1; i <= 3; ++i)
             {
@@ -1846,10 +1830,10 @@ INSERT INTO NLogSqlLiteTestAppNames(Id, Name) VALUES (1, @appName);"">
                 {
                     if (i > 1)
                     {
-                        SqlServerTest.TryDropDatabase(isAppVeyor);
+                        SqlServerTest.TryDropDatabase();
                         System.Threading.Thread.Sleep(1000);
                     }
-                    SqlServerTest.CreateDatabase(isAppVeyor);
+                    SqlServerTest.CreateDatabase();
                     break;
                 }
                 catch
@@ -2798,52 +2782,37 @@ INSERT INTO NLogSqlLiteTestAppNames(Id, Name) VALUES (1, @appName);"">
 
         private static class SqlServerTest
         {
-            static SqlServerTest()
+            public static string GetConnectionString()
             {
-            }
-
-            public static string GetConnectionString(bool isAppVeyor)
-            {
-                string connectionString = string.Empty;
 #if NETFRAMEWORK
-                connectionString = ConfigurationManager.AppSettings["SqlServerTestConnectionString"];
+                var connectionString = ConfigurationManager.AppSettings["SqlServerTestConnectionString"];
+                if (!String.IsNullOrWhiteSpace(connectionString))
+                    return connectionString;
 #endif
-                if (String.IsNullOrWhiteSpace(connectionString))
-                {
-                    connectionString = isAppVeyor ? AppVeyorConnectionStringNLogTest : LocalConnectionStringNLogTest;
-                }
-                return connectionString;
+                var testConnectionString = Environment.GetEnvironmentVariable("SQLSERVER_TEST_CONNECTION_STRING");
+                return String.IsNullOrWhiteSpace(testConnectionString) ? LocalConnectionStringNLogTest : testConnectionString;
             }
-
-            /// <summary>
-            /// AppVeyor connectionstring for SQL 2019, see https://www.appveyor.com/docs/services-databases/
-            /// </summary>
-            private const string AppVeyorConnectionStringMaster =
-                @"Server=(local)\SQL2019;Database=master;Encrypt=False;User ID=sa;Password=Password12!";
-
-            private const string AppVeyorConnectionStringNLogTest =
-                @"Server=(local)\SQL2019;Database=NLogTest;Encrypt=False;User ID=sa;Password=Password12!";
-
-            private const string LocalConnectionStringMaster =
-                @"Data Source=(localdb)\MSSQLLocalDB; Database=master; Encrypt=False; Integrated Security=True;";
 
             private const string LocalConnectionStringNLogTest =
                 @"Data Source=(localdb)\MSSQLLocalDB; Database=NLogTest; Encrypt=False; Integrated Security=True;";
 
-            public static void CreateDatabase(bool isAppVeyor)
+            public static void CreateDatabase()
             {
-                var connectionString = GetMasterConnectionString(isAppVeyor);
-                IssueCommand(IsAppVeyor(), "CREATE DATABASE NLogTest", connectionString);
+                IssueCommand("CREATE DATABASE NLogTest", GetMasterConnectionString());
             }
 
-            private static string GetMasterConnectionString(bool isAppVeyor)
+            private static string GetMasterConnectionString()
             {
-                return isAppVeyor ? AppVeyorConnectionStringMaster : LocalConnectionStringMaster;
+                var connectionStringBuilder = new SqlConnectionStringBuilder(GetConnectionString())
+                {
+                    InitialCatalog = "master",
+                };
+                return connectionStringBuilder.ConnectionString;
             }
 
-            public static void IssueCommand(bool isAppVeyor, string commandString, string connectionString)
+            public static void IssueCommand(string commandString, string connectionString = null)
             {
-                using (var connection = new SqlConnection(connectionString ?? GetConnectionString(isAppVeyor)))
+                using (var connection = new SqlConnection(connectionString ?? GetConnectionString()))
                 {
                     connection.Open();
                     using (var command = new SqlCommand(commandString, connection))
@@ -2853,9 +2822,9 @@ INSERT INTO NLogSqlLiteTestAppNames(Id, Name) VALUES (1, @appName);"">
                 }
             }
 
-            public static object IssueScalarQuery(bool isAppVeyor, string commandString, string connectionString = null)
+            public static object IssueScalarQuery(string commandString, string connectionString = null)
             {
-                using (var connection = new SqlConnection(connectionString ?? GetConnectionString(isAppVeyor)))
+                using (var connection = new SqlConnection(connectionString ?? GetConnectionString()))
                 {
                     connection.Open();
                     if (connectionString is null)
@@ -2871,12 +2840,12 @@ INSERT INTO NLogSqlLiteTestAppNames(Id, Name) VALUES (1, @appName);"">
             /// <summary>
             /// Try dropping. IF fail, not exception
             /// </summary>
-            public static bool TryDropDatabase(bool isAppVeyor)
+            public static bool TryDropDatabase()
             {
                 try
                 {
-                    var connectionString = GetMasterConnectionString(isAppVeyor);
-                    IssueCommand(isAppVeyor,
+                    var connectionString = GetMasterConnectionString();
+                    IssueCommand(
                         "ALTER DATABASE [NLogTest] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE NLogTest;",
                         connectionString);
                     return true;
@@ -2889,16 +2858,5 @@ INSERT INTO NLogSqlLiteTestAppNames(Id, Name) VALUES (1, @appName);"">
             }
         }
 
-        protected static bool IsAppVeyor()
-        {
-            var val = Environment.GetEnvironmentVariable("APPVEYOR");
-            return val != null && val.Equals("true", StringComparison.OrdinalIgnoreCase);
-        }
-
-        protected static bool IsLinux()
-        {
-            var val = Environment.GetEnvironmentVariable("WINDIR");
-            return string.IsNullOrEmpty(val);
-        }
     }
 }
