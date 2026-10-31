@@ -5,7 +5,7 @@
     <TargetFrameworks Condition=" '$(TargetFrameworks)' == '' AND '$(VisualStudioVersion)' &lt; '17.0' ">net35;net46;netstandard2.0</TargetFrameworks>
     <TargetFrameworks Condition=" '$(TargetFrameworks)' == '' ">net35;net46;netstandard2.0;netstandard2.1</TargetFrameworks>
 
-    <VersionPrefix>6.0.3</VersionPrefix>
+    <VersionPrefix>6.2.2</VersionPrefix>
     <AssemblyVersion>6.0.0.0</AssemblyVersion>    <!-- Strong AssemblyVersion must be fixed on 6.0.0.0 -->
     <FileVersion>$(VersionPrefix).0</FileVersion>
 
@@ -20,7 +20,7 @@
     <PackageReleaseNotes>
 Changelog:
 - Moved to own Git-repository
-- Updated to NLog v6.1.2 with improved support for DateTimeOffset
+- Updated to NLog v6.2.2 with improved support for DateTimeOffset
 - Removed .NET 4.5 build (note: .NET 4.5 is end of life)
       
 Docs:
@@ -74,8 +74,7 @@ https://github.com/NLog/NLog/wiki/Database-target
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="NLog" Version="6.1.2" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+    <PackageReference Include="NLog" Version="6.2.2" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
