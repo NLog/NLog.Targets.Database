@@ -21,6 +21,7 @@
 Changelog:
 - Moved to own Git-repository
 - Updated to NLog v6.1.2 with improved support for DateTimeOffset
+- Removed .NET 4.5 build (note: .NET 4.5 is end of life)
       
 Docs:
 https://github.com/NLog/NLog/wiki/Database-target
