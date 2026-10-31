@@ -1,56 +1,59 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">17.0</VisualStudioVersion>
-    <TargetFrameworks Condition=" '$(TargetFrameworks)' == '' AND '$(VisualStudioVersion)' &lt; '17.0' ">net462</TargetFrameworks>
-    <TargetFrameworks Condition=" '$(TargetFrameworks)' == '' ">net462;net10.0</TargetFrameworks>
+	<PropertyGroup>
+		<VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">17.0</VisualStudioVersion>
+		<TargetFrameworks Condition=" '$(TargetFrameworks)' == '' AND '$(VisualStudioVersion)' &lt; '17.0' ">net462</TargetFrameworks>
+		<TargetFrameworks Condition=" '$(TargetFrameworks)' == '' ">net462;net10.0</TargetFrameworks>
 
-    <IsPackable>false</IsPackable>
+		<IsPackable>false</IsPackable>
 
-    <AssemblyOriginatorKeyFile>NLogTests.snk</AssemblyOriginatorKeyFile>
-    <DelaySign>false</DelaySign>
-    <SignAssembly>true</SignAssembly>
-    <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
+		<AssemblyOriginatorKeyFile>NLogTests.snk</AssemblyOriginatorKeyFile>
+		<DelaySign>false</DelaySign>
+		<SignAssembly>true</SignAssembly>
+		<PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
 
-    <DebugType Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">Full</DebugType>
-  </PropertyGroup>
+		<DebugType Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">Full</DebugType>
+	</PropertyGroup>
 
-  <PropertyGroup Condition=" '$(monobuild)' != '' ">
-    <DefineConstants>$(DefineConstants);MONO</DefineConstants>
-  </PropertyGroup>
+	<PropertyGroup Condition=" '$(monobuild)' != '' ">
+		<DefineConstants>$(DefineConstants);MONO</DefineConstants>
+	</PropertyGroup>
 
-  <ItemGroup Condition=" '$(monobuild)' != '' ">
-    <PackageReference Include="Mono.Data.Sqlite.Portable" Version="1.0.3.5" />
-  </ItemGroup>
+	<ItemGroup Condition=" '$(monobuild)' != '' ">
+		<PackageReference Include="Mono.Data.Sqlite.Portable" Version="1.0.3.5" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="GitHubActionsTestLogger" Version="3.0.5" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
-    <PackageReference Include="xunit" Version="2.9.3" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="GitHubActionsTestLogger" Version="3.0.5" PrivateAssets="all" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.11.0" />
+		<PackageReference Include="xunit" Version="2.9.3" />
+		<PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
-    <Reference Include="System.Configuration" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Data.SQLite" />
-    <Reference Include="System.Transactions" />
-    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.119" />
-  </ItemGroup>
+	<ItemGroup Condition=" '$(TargetFrameworkIdentifier)' == '.NETFramework' ">
+		<Reference Include="System.Configuration" />
+		<Reference Include="System.Data" />
+		<Reference Include="System.Data.SQLite" />
+		<Reference Include="System.Transactions" />
+		<PackageReference Include="System.Data.SQLite.Core" Version="1.0.119" />
+	</ItemGroup>
 
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net10.0' ">
-    <PackageReference Include="System.Data.SqlClient" Version="4.9.1" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.1" />
-    <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.14" />
-    <PackageReference Include="System.Drawing.Common" Version="10.0.14" />  <!-- Help Microsoft.Data.SqlClient -->
-    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.23.0" />  <!-- Help Microsoft.Data.SqlClient -->
-  </ItemGroup>
+	<ItemGroup Condition=" '$(TargetFramework)' == 'net10.0' ">
+		<PackageReference Include="System.Data.SqlClient" Version="4.9.1" />
+		<PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.1" />
+		<PackageReference Include="System.Security.Cryptography.Pkcs" Version="9.0.22" />
+		<PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.14" />
+		<PackageReference Include="System.Drawing.Common" Version="10.0.14" />
+		<!-- Help Microsoft.Data.SqlClient -->
+		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.23.0" />
+		<!-- Help Microsoft.Data.SqlClient -->
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\..\src\NLog.Database\NLog.Database.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\..\src\NLog.Database\NLog.Database.csproj" />
+	</ItemGroup>
 
 </Project>
