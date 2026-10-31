@@ -67,7 +67,7 @@ jobs:
           exit 1
 
       - name: Test
-        run: dotnet test ${{ env.SOLUTION }} --configuration Release --no-restore --no-build -p:TargetFrameworks=net8.0 --logger "console;verbosity=normal"
+        run: dotnet test ${{ env.SOLUTION }} --configuration Release --no-restore --no-build -p:TargetFrameworks=net8.0 --logger GitHubActions
 
   pack:
     name: Create NuGet package
