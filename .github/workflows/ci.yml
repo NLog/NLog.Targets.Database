@@ -17,30 +17,27 @@ env:
 
 jobs:
   build:
-    name: Build & test (Windows)
-    runs-on: windows-latest
+    name: Build & test (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
     permissions:
       contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows
+            os: windows-latest
+            target-args: ""
+          - name: Ubuntu
+            os: ubuntu-latest
+            target-args: -p:TargetFrameworks=net10.0
 
     steps:
       - uses: actions/checkout@v7
 
       - name: Restore & Build
-        run: dotnet build ${{ env.SOLUTION }} --configuration Release
-
-      - name: Test
-        run: dotnet test ${{ env.SOLUTION }} --configuration Release --no-restore --no-build --logger GitHubActions
-
-  build-linux:
-    name: Build & test (Ubuntu + SQL Server 2019)
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Restore & Build
-        run: dotnet build ${{ env.SOLUTION }} --configuration Release -p:TargetFrameworks=net10.0
+        run: dotnet build ${{ env.SOLUTION }} --configuration Release ${{ matrix.target-args }}
 
       - name: Start SQL Server
         shell: bash
@@ -67,7 +64,7 @@ jobs:
           exit 1
 
       - name: Test
-        run: dotnet test ${{ env.SOLUTION }} --configuration Release --no-restore --no-build -p:TargetFrameworks=net10.0 --logger GitHubActions
+        run: dotnet test ${{ env.SOLUTION }} --configuration Release --no-restore --no-build ${{ matrix.target-args }} --logger GitHubActions
 
   pack:
     name: Create NuGet package
@@ -114,7 +111,7 @@ jobs:
 
   publish:
     name: Publish NuGet package
-    needs: [build, build-linux, pack]
+    needs: [build, pack]
     if: >-
       (github.event_name == 'push' && github.ref == 'refs/heads/master') ||
       (github.event_name == 'workflow_dispatch' && inputs.force_nuget_publish)
