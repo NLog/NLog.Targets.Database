@@ -143,7 +143,7 @@ namespace NLog.Targets
         /// <docgen category='Parameter Options' order='2' />
         public string DbType
         {
-            get => _dbTypeEnum.HasValue ? _dbTypeEnum.ToString() : _dbType;
+            get => _dbTypeEnum?.ToString() ?? _dbType;
             set
             {
                 _dbType = value;
@@ -361,7 +361,7 @@ namespace NLog.Targets
 
             private static Action<IDbDataParameter>? BuildCustomDbSetter(Type dbParameterType, string dbTypePropertyName, string dbTypeEnumValue)
             {
-                PropertyInfo propInfo = dbParameterType.GetProperty(dbTypePropertyName, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+                var propInfo = dbParameterType.GetProperty(dbTypePropertyName, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
                 if (propInfo is null)
                 {
                     InternalLogger.Error("DatabaseTarget: Failed to resolve type {0} property '{1}' to assign DbType={2}", dbParameterType, dbTypePropertyName, dbTypeEnumValue);

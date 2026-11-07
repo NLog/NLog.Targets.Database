@@ -99,6 +99,8 @@ namespace NLog.Targets
             if (!propertySetterCache.Equals(Name, dbConnectionType))
             {
                 var propertyInfo = dbConnectionType.GetProperty(Name);
+                if (propertyInfo is null)
+                    return false;
                 var propertySetter = propertyInfo.CreatePropertySetter();
                 propertySetterCache = new PropertySetterCacheItem(Name, dbConnectionType, propertySetter);
                 _propertySetter = propertySetterCache;

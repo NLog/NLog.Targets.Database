@@ -371,7 +371,12 @@ namespace NLog.Targets
                 throw new NLogRuntimeException($"Failed to resolve ConnectionType from DbProvider: {DBProvider}");
             }
 
-            return (IDbConnection)Activator.CreateInstance(ConnectionType);
+            var dbConnection = Activator.CreateInstance(ConnectionType) as IDbConnection;
+            if (dbConnection is null)
+            {
+                throw new NLogRuntimeException($"Failed to create instance of ConnectionType: {ConnectionType}");
+            }
+            return dbConnection;
         }
 
         private void ApplyDatabaseObjectProperties(object databaseObject, IList<DatabaseObjectPropertyInfo> objectProperties, LogEventInfo logEventInfo)
@@ -564,7 +569,7 @@ namespace NLog.Targets
         /// <summary>
         /// Set the <see cref="ConnectionType"/> to use it for opening connections to the database.
         /// </summary>
-        private Type ResolveConnectionType()
+        private Type? ResolveConnectionType()
         {
             switch (DBProvider.ToUpperInvariant())
             {
